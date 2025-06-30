@@ -1,0 +1,61 @@
+# Core LangChain and OpenAI
+langchain>=0.1.0
+openai>=1.0.0
+langchain-experimental>=0.0.40
+
+# Database connections
+sqlalchemy>=2.0.0
+sqlite3
+psycopg2-binary>=2.9.0
+pymysql>=1.0.0
+pyodbc>=4.0.0
+
+# Web framework
+streamlit>=1.28.0
+
+# Data processing and visualization
+pandas>=2.0.0
+numpy>=1.24.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.15.0
+
+# PDF generation and reporting
+reportlab>=4.0.0
+fpdf2>=2.7.0
+
+# Configuration and environment
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+
+# Email functionality
+secure-smtplib>=0.1.1
+
+# Development and testing (optional)
+pytest>=7.4.0
+pytest-cov>=4.1.0
+black>=23.7.0
+flake8>=6.0.0
+isort>=5.12.0
+mypy>=1.5.0
+
+# Security scanning
+bandit>=1.7.5
+safety>=2.3.0
+
+# Additional utilities
+requests>=2.31.0
+python-dateutil>=2.8.0
+pytz>=2023.3
+
+# Optional: Database-specific drivers
+# Uncomment as needed for your database
+# cx_Oracle>=8.3.0          # Oracle
+# pymongo>=4.5.0            # MongoDB
+# cassandra-driver>=3.28.0  # Cassandra
+# snowflake-connector-python>=3.2.0  # Snowflake
+
+# Optional: Cloud integrations
+# boto3>=1.28.0             # AWS
+# google-cloud-bigquery>=3.11.0  # Google BigQuery
+# azure-storage-blob>=12.17.0    # Azure

@@ -1,0 +1,116 @@
+# Environment Variables & Secrets
+.env
+.env.local
+.env.production
+.env.staging
+*.key
+*.pem
+*.p12
+*.pfx
+config/secrets.yaml
+secrets/
+
+# API Keys and Credentials
+api_keys.txt
+credentials.json
+service-account.json
+aws-credentials
+gcp-credentials
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# Database Files - Protect real data but allow sample DBs
+*.db
+*.sqlite
+*.sqlite3
+
+# Allow sample/demo databases
+!sample_*.db
+!sample_*.sqlite
+!sample_*.sqlite3
+!demo_*.db
+!demo_*.sqlite
+!demo_*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Reports and uploads (may contain sensitive user data)
+reports/*.pdf
+uploads/*.csv
+uploads/*.xlsx
+uploads/*.xls
+
+# AWS
+.aws/
+
+# Docker
+.dockerignore
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/ 
