@@ -249,10 +249,11 @@ def create_chart_from_query_result(query_result: str, chart_type: str, title: st
                 pass
         
         filename = f"chart_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-        dataframe_to_plot(df, chart_type, title)
-        plt.savefig(filename, dpi=150, bbox_inches='tight')
-        plt.close()
-        
+        img_b64 = dataframe_to_plot(df, chart_type, title)
+
+        with open(filename, "wb") as f:
+            f.write(base64.b64decode(img_b64))
+
         return filename
         
     except Exception as e:
