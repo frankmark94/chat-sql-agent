@@ -42,7 +42,7 @@ def create_sql_agent(database_uri: str, model_name: str = "gpt-3.5-turbo"):
     return agent
 
 def create_advanced_sql_agent(
-    database_uri: str, 
+    database_uri: str,
     model_name: str = "gpt-4",
     enable_reporting: bool = True,
     enable_email: bool = True
@@ -68,12 +68,17 @@ def create_advanced_sql_agent(
     )
     
     toolkit = SQLDatabaseToolkit(db=db, llm=llm)
-    
+
     # Get SQL tools from toolkit
     sql_tools = toolkit.get_tools()
-    
+    # Add optional custom tools
+    custom_tools = get_custom_tools(
+        enable_reporting=enable_reporting,
+        enable_email=enable_email,
+    )
+
     agent = initialize_agent(
-        sql_tools,
+        sql_tools + custom_tools,
         llm,
         agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
         verbose=True,
