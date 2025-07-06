@@ -3,8 +3,9 @@
 Check the legacy create_sql_agent function signature
 """
 
-from langchain.agents import create_sql_agent
 import inspect
+
+from langchain.agents import create_sql_agent
 
 print("🔍 Checking legacy create_sql_agent function signature...")
 print("=" * 50)

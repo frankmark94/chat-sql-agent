@@ -1,13 +1,16 @@
-import streamlit as st
-import pandas as pd
-import sys
 import os
+import sys
+
+import pandas as pd
+import streamlit as st
 from openai import OpenAI
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../src')
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../src")
 
 from agents import create_sql_agent
 from agents_enhanced import create_enhanced_sql_agent
 from config import settings
+
 
 @st.cache_data(ttl=3600)  # Cache for 1 hour
 def get_available_models():
@@ -15,32 +18,36 @@ def get_available_models():
     try:
         if not settings.OPENAI_API_KEY:
             return ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o"]
-        
+
         client = OpenAI(api_key=settings.OPENAI_API_KEY)
         models = client.models.list()
-        
+
         # Filter for relevant chat models
         chat_models = []
         for model in models.data:
             model_name = model.id
             # Only include GPT models suitable for chat
-            if any(prefix in model_name.lower() for prefix in ['gpt-3.5', 'gpt-4']):
+            if any(prefix in model_name.lower() for prefix in ["gpt-3.5", "gpt-4"]):
                 chat_models.append(model_name)
-        
+
         # Sort models with preferred ones first
-        preferred_order = ['gpt-4o', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo']
+        preferred_order = ["gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]
         sorted_models = []
-        
+
         # Add preferred models first (if available)
         for preferred in preferred_order:
             matching = [m for m in chat_models if preferred in m]
             if matching:
                 sorted_models.extend(sorted(matching))
-        
+
         # Add remaining models
-        remaining = [m for m in chat_models if not any(preferred in m for preferred in preferred_order)]
+        remaining = [
+            m
+            for m in chat_models
+            if not any(preferred in m for preferred in preferred_order)
+        ]
         sorted_models.extend(sorted(remaining))
-        
+
         # Remove duplicates while preserving order
         seen = set()
         unique_models = []
@@ -48,19 +55,20 @@ def get_available_models():
             if model not in seen:
                 seen.add(model)
                 unique_models.append(model)
-        
-        return unique_models if unique_models else ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o"]
-        
+
+        return (
+            unique_models
+            if unique_models
+            else ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o"]
+        )
+
     except Exception as e:
         st.warning(f"Could not fetch models from OpenAI: {str(e)}")
         # Return fallback models
         return ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o"]
 
-st.set_page_config(
-    page_title="Chat with SQL Agent",
-    page_icon="🗣️",
-    layout="wide"
-)
+
+st.set_page_config(page_title="Chat with SQL Agent", page_icon="🗣️", layout="wide")
 
 st.title("🗣️ Chat with SQL Agent")
 st.markdown("Ask questions about your database in natural language!")
@@ -89,68 +97,70 @@ else:
 
 with st.sidebar:
     st.header("Configuration")
-    
+
     # Model Selection
     st.subheader("🤖 AI Model")
-    
+
     # Get available models
     available_models = get_available_models()
-    
+
     # Model selection with helpful descriptions
     model_descriptions = {
         "gpt-4o": "GPT-4o - Latest and most capable (Recommended)",
         "gpt-4-turbo": "GPT-4 Turbo - Fast and powerful",
         "gpt-4": "GPT-4 - High quality responses",
-        "gpt-3.5-turbo": "GPT-3.5 Turbo - Fast and cost-effective"
+        "gpt-3.5-turbo": "GPT-3.5 Turbo - Fast and cost-effective",
     }
-    
+
     # Create display options with descriptions
     model_options = []
     for model in available_models:
         if model in model_descriptions:
-            model_options.append(f"{model} - {model_descriptions[model].split(' - ')[1]}")
+            model_options.append(
+                f"{model} - {model_descriptions[model].split(' - ')[1]}"
+            )
         else:
             model_options.append(model)
-    
+
     # Find the index of the current model
     current_index = 0
     for i, model in enumerate(available_models):
         if model == st.session_state.selected_model:
             current_index = i
             break
-    
+
     selected_model_display = st.selectbox(
         "Select OpenAI Model",
         model_options,
         index=current_index,
-        help="Choose the AI model for SQL generation and analysis"
+        help="Choose the AI model for SQL generation and analysis",
     )
-    
+
     # Extract the actual model name and store in session state
     selected_model = selected_model_display.split(" - ")[0]
     st.session_state.selected_model = selected_model
-    
+
     # Show model info
     if selected_model in model_descriptions:
         st.info(f"ℹ️ {model_descriptions[selected_model]}")
-    
+
     # Add refresh button for models
     if st.button("🔄 Refresh Models"):
         st.cache_data.clear()
         st.rerun()
-    
+
     st.divider()
-    
+
     # Chain-of-Thought Settings
     st.subheader("🧠 Chain-of-Thought")
-    
+
     show_reasoning = st.checkbox(
         "Show reasoning steps",
         value=st.session_state.show_reasoning,
-        help="Display the AI's intermediate thinking steps and SQL queries"
+        help="Display the AI's intermediate thinking steps and SQL queries",
     )
     st.session_state.show_reasoning = show_reasoning
-    
+
     if show_reasoning:
         st.info("💡 Reasoning steps will be shown below responses")
     
@@ -262,17 +272,18 @@ with st.sidebar:
                         st.error(f"❌ Failed to send report: {str(e)}")
     
     st.divider()
-    
+
     # Database Configuration
     st.subheader("🗄️ Database Configuration")
-    
+
     db_type = st.selectbox(
-        "Database Type",
-        ["SQLite", "PostgreSQL", "MySQL", "SQL Server"]
+        "Database Type", ["SQLite", "PostgreSQL", "MySQL", "SQL Server"]
     )
-    
+
     if db_type == "SQLite":
-        db_file = st.file_uploader("Upload SQLite Database", type=["db", "sqlite", "sqlite3"])
+        db_file = st.file_uploader(
+            "Upload SQLite Database", type=["db", "sqlite", "sqlite3"]
+        )
         if db_file:
             with open("temp_db.sqlite", "wb") as f:
                 f.write(db_file.getbuffer())
@@ -285,7 +296,7 @@ with st.sidebar:
         database = st.text_input("Database Name")
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
-        
+
         if all([host, port, database, username, password]):
             if db_type == "PostgreSQL":
                 db_url = f"postgresql://{username}:{password}@{host}:{port}/{database}"
@@ -295,7 +306,7 @@ with st.sidebar:
                 db_url = f"mssql://{username}:{password}@{host}:{port}/{database}"
         else:
             db_url = None
-    
+
     if db_url and st.button("Connect to Database"):
         try:
             with st.spinner(f"Connecting with {st.session_state.selected_model}..."):
@@ -333,12 +344,11 @@ if prompt := st.chat_input("Ask a question about your data..."):
                     # Get response with or without intermediate steps
                     if st.session_state.show_reasoning:
                         response = st.session_state.agent.invoke(
-                            {"input": prompt}, 
-                            return_only_outputs=False
+                            {"input": prompt}, return_only_outputs=False
                         )
                         output = response["output"]
                         intermediate_steps = response.get("intermediate_steps", [])
-                        
+
                         st.markdown(output)
                         
                         # Check if any visualizations were created
@@ -360,18 +370,31 @@ if prompt := st.chat_input("Ask a question about your data..."):
                         # Show reasoning steps if available
                         if intermediate_steps:
                             with st.expander("🧠 Reasoning Steps", expanded=False):
-                                for i, (action, observation) in enumerate(intermediate_steps, 1):
+                                for i, (action, observation) in enumerate(
+                                    intermediate_steps, 1
+                                ):
                                     st.markdown(f"**Step {i}:**")
                                     st.markdown(f"*Action:* {action.tool}")
-                                    if hasattr(action, 'tool_input'):
-                                        st.code(str(action.tool_input), language="sql" if "sql" in action.tool.lower() else None)
+                                    if hasattr(action, "tool_input"):
+                                        st.code(
+                                            str(action.tool_input),
+                                            language=(
+                                                "sql"
+                                                if "sql" in action.tool.lower()
+                                                else None
+                                            ),
+                                        )
                                     st.markdown(f"*Observation:* {observation}")
                                     if i < len(intermediate_steps):
                                         st.divider()
-                        
-                        st.session_state.messages.append({"role": "assistant", "content": output})
+
+                        st.session_state.messages.append(
+                            {"role": "assistant", "content": output}
+                        )
                     else:
-                        response = st.session_state.agent.invoke({"input": prompt})["output"]
+                        response = st.session_state.agent.invoke({"input": prompt})[
+                            "output"
+                        ]
                         st.markdown(response)
                         
                         # Check if any visualizations were created
@@ -395,5 +418,6 @@ if prompt := st.chat_input("Ask a question about your data..."):
                 except Exception as e:
                     error_msg = f"Error: {str(e)}"
                     st.error(error_msg)
-                    st.session_state.messages.append({"role": "assistant", "content": error_msg})
-
+                    st.session_state.messages.append(
+                        {"role": "assistant", "content": error_msg}
+                    )

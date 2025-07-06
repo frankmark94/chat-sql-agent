@@ -1,13 +1,16 @@
-import smtplib
 import os
+import smtplib
+from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.mime.application import MIMEApplication
 from typing import List, Optional, Type
+
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
+
 from config import settings
 from visualization_tools import get_visualization_tools
+
 
 class SendEmailInput(BaseModel):
     email_details: str = Field(description="Email details in format: 'report_path|recipient@email.com|subject|body' (subject and body are optional)")
@@ -33,34 +36,42 @@ class SendEmailTool(BaseTool):
         except Exception as e:
             return f"Failed to send email: {str(e)}"
 
-def send_email(report_path: str, to: str, subject: str = "SQL Analysis Report", body: str = "Please find the attached SQL analysis report.") -> str:
+
+def send_email(
+    report_path: str,
+    to: str,
+    subject: str = "SQL Analysis Report",
+    body: str = "Please find the attached SQL analysis report.",
+) -> str:
     """
     Send an email with an attached report file.
-    
+
     Args:
         report_path: Path to the report file to attach
         to: Recipient email address
         subject: Email subject line
         body: Email body text
-    
+
     Returns:
         Success or error message
     """
     if not os.path.exists(report_path):
         raise FileNotFoundError(f"Report file not found: {report_path}")
-    
+
     msg = MIMEMultipart()
-    msg['From'] = settings.EMAIL_FROM
-    msg['To'] = to
-    msg['Subject'] = subject
-    
-    msg.attach(MIMEText(body, 'plain'))
-    
-    with open(report_path, 'rb') as f:
+    msg["From"] = settings.EMAIL_FROM
+    msg["To"] = to
+    msg["Subject"] = subject
+
+    msg.attach(MIMEText(body, "plain"))
+
+    with open(report_path, "rb") as f:
         attach = MIMEApplication(f.read(), _subtype="pdf")
-        attach.add_header('Content-Disposition', 'attachment', filename=os.path.basename(report_path))
+        attach.add_header(
+            "Content-Disposition", "attachment", filename=os.path.basename(report_path)
+        )
         msg.attach(attach)
-    
+
     try:
         server = smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT)
         if settings.SMTP_USE_TLS:
@@ -69,10 +80,10 @@ def send_email(report_path: str, to: str, subject: str = "SQL Analysis Report", 
         # Only authenticate if credentials are provided
         if settings.SMTP_USERNAME and settings.SMTP_PASSWORD:
             server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
-        
+
         server.send_message(msg)
         server.quit()
-        
+
         return f"Email sent successfully to {to}"
         
     except smtplib.SMTPAuthenticationError as e:
@@ -81,6 +92,7 @@ def send_email(report_path: str, to: str, subject: str = "SQL Analysis Report", 
         raise Exception(f"SMTP error: {str(e)}")
     except Exception as e:
         raise Exception(f"Failed to send email: {str(e)}")
+
 
 class QueryVisualizationInput(BaseModel):
     visualization_request: str = Field(description="Visualization request in format: 'query_result|chart_type|title' (title is optional)")
@@ -102,6 +114,7 @@ class QueryVisualizationTool(BaseTool):
             title = parts[2].strip() if len(parts) > 2 and parts[2].strip() else "Query Result Visualization"
             
             from reporting import create_chart_from_query_result
+
             chart_path = create_chart_from_query_result(query_result, chart_type, title)
             return f"Visualization created: {chart_path}"
         except Exception as e:
@@ -110,7 +123,7 @@ class QueryVisualizationTool(BaseTool):
 def get_custom_tools(enable_reporting: bool = True, enable_email: bool = True, db_path: str = "temp_db.sqlite") -> List[BaseTool]:
     """
     Get list of custom tools for the SQL agent.
-    
+
     Args:
         enable_reporting: Whether to include reporting tools
         enable_email: Whether to include email tools
@@ -120,10 +133,10 @@ def get_custom_tools(enable_reporting: bool = True, enable_email: bool = True, d
         List of custom tools
     """
     tools = []
-    
+
     if enable_email:
         tools.append(SendEmailTool())
-    
+
     if enable_reporting:
         tools.append(QueryVisualizationTool())
         # Add visualization tools

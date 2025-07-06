@@ -3,8 +3,9 @@
 Check the actual function signature of create_sql_agent
 """
 
-from langchain_community.agent_toolkits.sql.base import create_sql_agent
 import inspect
+
+from langchain_community.agent_toolkits.sql.base import create_sql_agent
 
 print("🔍 Checking create_sql_agent function signature...")
 print("=" * 50)
