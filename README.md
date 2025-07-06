@@ -2,6 +2,23 @@
 
 A powerful AI-driven natural language interface for database interaction using advanced LangChain agents and OpenAI. Transform complex SQL queries into simple conversations and get instant insights with automated visualizations.
 
+## 🛠️ Tech Stack
+
+![Python](https://img.shields.io/badge/Python-3.11+-blue?style=for-the-badge&logo=python&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-red?style=for-the-badge&logo=streamlit&logoColor=white)
+![LangChain](https://img.shields.io/badge/LangChain-0.1+-green?style=for-the-badge&logo=chainlink&logoColor=white)
+![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4-purple?style=for-the-badge&logo=openai&logoColor=white)
+
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0+-orange?style=for-the-badge&logo=sqlalchemy&logoColor=white)
+![Multi-DB](https://img.shields.io/badge/Multi--DB-Support-lightblue?style=for-the-badge&logo=database&logoColor=white)
+![Matplotlib](https://img.shields.io/badge/Matplotlib-3.7+-cyan?style=for-the-badge&logo=matplotlib&logoColor=white)
+![Plotly](https://img.shields.io/badge/Plotly-5.15+-darkblue?style=for-the-badge&logo=plotly&logoColor=white)
+
+![Pandas](https://img.shields.io/badge/Pandas-2.0+-yellow?style=for-the-badge&logo=pandas&logoColor=white)
+![Pydantic](https://img.shields.io/badge/Pydantic-2.0+-pink?style=for-the-badge&logo=pydantic&logoColor=white)
+![ReportLab](https://img.shields.io/badge/ReportLab-4.0+-brown?style=for-the-badge&logo=pdf&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Ready-brightgreen?style=for-the-badge&logo=docker&logoColor=white)
+
 ## ✨ Features
 
 ### 🤖 **Enhanced AI Agent**
