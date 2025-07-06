@@ -1,7 +1,10 @@
 from langchain_community.utilities import SQLDatabase
 from langchain_openai import ChatOpenAI
 from langchain_community.agent_toolkits.sql.toolkit import SQLDatabaseToolkit
-from langchain.agents import initialize_agent, AgentType
+from langchain.agents import initialize_agent, AgentType, create_react_agent
+from langchain.agents.agent import AgentExecutor
+from langchain.prompts import PromptTemplate
+from langchain import hub
 from config import settings
 from tools import get_custom_tools
 
@@ -35,8 +38,9 @@ def create_sql_agent(database_uri: str, model_name: str = "gpt-3.5-turbo"):
         agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
         verbose=True,
         handle_parsing_errors=True,
-        max_iterations=3,
-        early_stopping_method="generate"
+        max_iterations=10,
+        early_stopping_method="generate",
+        return_intermediate_steps=True
     )
     
     return agent
@@ -78,8 +82,9 @@ def create_advanced_sql_agent(
         agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
         verbose=True,
         handle_parsing_errors=True,
-        max_iterations=3,
-        early_stopping_method="generate"
+        max_iterations=10,
+        early_stopping_method="generate",
+        return_intermediate_steps=True
     )
     
     return agent

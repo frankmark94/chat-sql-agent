@@ -113,4 +113,23 @@ htmlcov/
 coverage.xml
 *.cover
 .hypothesis/
-.pytest_cache/ 
+.pytest_cache/
+
+# LinkedIn/Social Media Posts
+LinkedInPost.md
+linkedin_post.md
+social_media_posts/
+
+# Test files and development scripts
+test_*.py
+*_test.py
+test_enhanced_agent.py
+test_visualization.py
+test_full_agent.py
+check_*.py
+
+# Development and debugging files
+simple_agent.py
+get-pip.py
+notebooks/
+*.ipynb 

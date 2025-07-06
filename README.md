@@ -1,283 +1,226 @@
 # 🗣️ Chat with SQL Agent
 
-A powerful natural language interface for interacting with databases using LangChain and OpenAI. Ask questions in plain English and get instant insights from your data!
+A powerful AI-driven natural language interface for database interaction using advanced LangChain agents and OpenAI. Transform complex SQL queries into simple conversations and get instant insights with automated visualizations.
 
 ## ✨ Features
 
-- **Natural Language Queries**: Ask questions about your data in plain English
-- **Multi-Database Support**: Works with SQLite, PostgreSQL, MySQL, SQL Server, and more
-- **Web Interface**: Beautiful Streamlit UI for easy interaction
-- **Report Generation**: Create PDF reports and visualizations from your queries
-- **Email Integration**: Send reports directly via email
-- **Jupyter Notebook Demo**: 5-minute quick start in Google Colab
-- **Comprehensive Testing**: Full test suite with CI/CD pipeline
+### 🤖 **Enhanced AI Agent**
+- **Natural Language Processing**: Ask questions in plain English, get precise SQL results
+- **Intelligent SQL Generation**: Advanced query optimization and error handling
+- **Multi-step Reasoning**: Complex analytical questions resolved automatically
+- **Context Awareness**: Understands database schema and relationships
+
+### 📊 **Advanced Visualizations**
+- **Automatic Chart Generation**: Bar charts, line plots, scatter plots, pie charts
+- **Network Diagrams**: Database relationship mapping
+- **Statistical Analysis**: Histograms, heatmaps, correlation matrices
+- **Interactive Plots**: Powered by Matplotlib, Seaborn, and Plotly
+
+### 🗄️ **Multi-Database Support**
+- SQLite, PostgreSQL, MySQL, SQL Server
+- Dynamic schema discovery and validation
+- Connection pooling and optimization
+- Secure parameterized queries
+
+### 📧 **Reporting & Communication**
+- **PDF Report Generation**: Professional formatted reports
+- **Email Integration**: SMTP with secure authentication
+- **Export Capabilities**: CSV, Excel, PDF formats
+- **Automated Scheduling**: Configure recurring reports
+
+### 🎨 **Modern Web Interface**
+- **Streamlit UI**: Intuitive, responsive design
+- **Real-time Chat**: Interactive conversation flow
+- **Visualization Display**: Charts appear inline with responses
+- **Configuration Management**: Easy setup and customization
 
 ## 🚀 Quick Start
 
-### 1. Clone and Install
+### 1. Installation
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/frankmark94/chat-sql-agent.git
 cd chat-sql-agent
 pip install -r requirements.txt
 ```
 
-### 2. Set Up Environment
+### 2. Environment Setup
 
-Copy the example environment file and configure your settings:
+Create your environment configuration:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` with your API keys and configuration:
+Configure your `.env` file:
 
 ```env
+# Required
 OPENAI_API_KEY=your_openai_api_key_here
 EMAIL_FROM=your_email@example.com
-# ... other settings
+
+# Optional SMTP Configuration
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=your_email@gmail.com
+SMTP_PASSWORD=your_app_password
+
+# Application Settings
+OPENAI_MODEL=gpt-4
+DEBUG=False
 ```
 
-### 3. Run the Application
+### 3. Launch Application
 
-**Option A: Streamlit Web App**
+**Web Interface (Recommended)**
 ```bash
 streamlit run app/main.py
 ```
 
-**Option B: Jupyter Notebook Demo**
-```bash
-jupyter notebook notebooks/demo.ipynb
-```
-
-**Option C: Python Script**
+**Python API**
 ```python
-from src.agents import create_sql_agent
+from src.agents_enhanced import create_enhanced_sql_agent
 
-agent = create_sql_agent("sqlite:///your_database.db")
-response = agent.run("How many customers do we have?")
-print(response)
+# Create agent
+agent = create_enhanced_sql_agent("sqlite:///your_database.db")
+
+# Ask questions
+response = agent.invoke({"input": "What are our top 5 customers by revenue?"})
+print(response["output"])
 ```
 
-## 📁 Project Structure
+## 💡 Usage Examples
 
+### Basic Analytics
+```
+"How many customers do we have?"
+"What's our average order value?"
+"Show me sales by month"
+```
+
+### Advanced Queries
+```
+"Find customers who haven't ordered in 6 months"
+"What's the correlation between product price and ratings?"
+"Calculate customer lifetime value by segment"
+```
+
+### Visualizations
+```
+"Create a bar chart of sales by region"
+"Show me a pie chart of order status distribution"
+"Generate a network diagram of table relationships"
+"Make a scatter plot of price vs ratings"
+```
+
+### Reporting
+```
+"Create a monthly sales report and email it to manager@company.com"
+"Generate a customer analysis report"
+"Export top products data to Excel"
+```
+
+## 🏗️ Architecture
+
+### Project Structure
 ```
 chat-sql-agent/
-├─ app/
-│  └─ main.py                 # Streamlit web interface
-├─ src/
-│  ├─ agents.py              # SQL agent factory functions
-│  ├─ tools.py               # Custom tools (email, visualization)
-│  ├─ reporting.py           # PDF and chart generation
-│  └─ config.py              # Configuration management
-├─ notebooks/
-│  └─ demo.ipynb             # Interactive demo notebook
-├─ tests/
-│  └─ test_agent_sql.py      # Comprehensive test suite
-├─ .github/workflows/
-│  └─ ci.yml                 # CI/CD pipeline
-├─ requirements.txt          # Python dependencies
-├─ .env.example             # Environment variables template
-└─ README.md                # This file
+├── app/
+│   └── main.py                    # Streamlit web application
+├── src/
+│   ├── agents.py                  # Basic SQL agent
+│   ├── agents_enhanced.py         # Enhanced agent with visualizations
+│   ├── tools.py                   # Email and reporting tools
+│   ├── visualization_tools.py     # Chart and graph generation
+│   ├── reporting.py               # PDF and report generation
+│   └── config.py                  # Configuration management
+├── reports/                       # Generated reports and charts
+├── uploads/                       # Database file uploads
+├── requirements.txt               # Python dependencies
+└── .env.example                   # Environment template
 ```
 
-## 🎯 Usage Examples
-
-### Basic Queries
-```python
-# Simple counting
-agent.run("How many users are in the database?")
-
-# Aggregations
-agent.run("What's the total revenue for this month?")
-
-# Filtering
-agent.run("Show me customers from California")
-```
-
-### Advanced Analytics
-```python
-# Time series analysis
-agent.run("Show me monthly sales trends for the last year")
-
-# Customer segmentation
-agent.run("Which customers haven't made a purchase in 90 days?")
-
-# Product performance
-agent.run("What are the top 5 products by revenue?")
-```
-
-### Visualization and Reporting
-```python
-# Generate charts
-agent.run("Create a bar chart of sales by region")
-
-# Create reports
-agent.run("Generate a monthly sales report and email it to manager@company.com")
-```
-
-## 🗄️ Supported Databases
-
-- **SQLite**: `sqlite:///path/to/database.db`
-- **PostgreSQL**: `postgresql://user:pass@host:port/database`
-- **MySQL**: `mysql://user:pass@host:port/database`
-- **SQL Server**: `mssql://user:pass@host:port/database`
-- **Oracle**: `oracle://user:pass@host:port/database`
-- **And more!**
+### Technical Stack
+- **AI/ML**: OpenAI GPT-4, LangChain Agents
+- **Database**: SQLAlchemy with multi-DB support
+- **Visualization**: Matplotlib, Seaborn, Plotly, NetworkX
+- **Web Framework**: Streamlit
+- **Email**: SMTP with TLS encryption
+- **Reports**: ReportLab, FPDF
+- **Security**: Environment-based secrets, parameterized queries
 
 ## ⚙️ Configuration
 
-### Environment Variables
+### Agent Types
+- **Basic SQL Agent**: Standard query execution
+- **Enhanced SQL Agent**: Advanced reasoning + visualizations (recommended)
 
-| Variable | Description | Required | Default |
-|----------|-------------|----------|---------|
-| `OPENAI_API_KEY` | OpenAI API key | ✅ | - |
-| `EMAIL_FROM` | Sender email address | ✅ | - |
-| `SMTP_SERVER` | SMTP server hostname | ❌ | smtp.gmail.com |
-| `SMTP_PORT` | SMTP server port | ❌ | 587 |
-| `SMTP_USERNAME` | SMTP username | ❌ | - |
-| `SMTP_PASSWORD` | SMTP password | ❌ | - |
-| `DEBUG` | Enable debug mode | ❌ | False |
+### Visualization Options
+| Chart Type | Use Case | Example Query |
+|------------|----------|---------------|
+| Bar Chart | Category comparisons | "Sales by product category" |
+| Line Plot | Trends over time | "Monthly revenue trends" |
+| Scatter Plot | Correlations | "Price vs rating correlation" |
+| Pie Chart | Distributions | "Order status breakdown" |
+| Histogram | Value distributions | "Customer age distribution" |
+| Heatmap | Matrix correlations | "Feature correlation matrix" |
+| Network | Relationships | "Table relationship diagram" |
 
-### Custom Configuration
-
-```python
-from src.config import Settings
-
-# Override default settings
-custom_settings = Settings(
-    OPENAI_MODEL="gpt-4",
-    MAX_ITERATIONS=15,
-    VERBOSE_AGENT=True
-)
+### Email Configuration
+```env
+EMAIL_FROM=reports@yourcompany.com
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USE_TLS=true
+SMTP_USERNAME=your_email@gmail.com
+SMTP_PASSWORD=your_app_specific_password
 ```
 
-## 🧪 Testing
+## 🛡️ Security & Best Practices
 
-Run the test suite:
+- **API Key Protection**: Never commit secrets to repository
+- **SQL Injection Prevention**: Parameterized queries only
+- **Secure Email**: TLS encryption for SMTP connections
+- **Input Validation**: Schema-aware query validation
+- **Access Control**: Environment-based configuration
 
-```bash
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=src --cov-report=html
-
-# Run specific test categories
-pytest -m "not integration"  # Skip integration tests
-pytest tests/test_agent_sql.py -v  # Specific test file
-```
-
-## 🔧 Development
-
-### Setting up Development Environment
-
-```bash
-# Install development dependencies
-pip install -r requirements.txt
-
-# Install pre-commit hooks
-pre-commit install
-
-# Run linting
-black .
-flake8 .
-isort .
-```
+## 🧪 Development
 
 ### Adding Custom Tools
-
 ```python
-# src/tools.py
+# src/custom_tools.py
 from langchain.tools import BaseTool
+from pydantic import BaseModel, Field
 
-class MyCustomTool(BaseTool):
-    name = "my_custom_tool"
-    description = "Description of what this tool does"
+class CustomAnalyticsTool(BaseTool):
+    name: str = "custom_analytics"
+    description: str = "Perform custom analytics operations"
     
     def _run(self, query: str) -> str:
-        # Your custom logic here
-        return "Custom tool result"
-
-# Add to get_custom_tools() function
+        # Your custom logic
+        return "Analytics result"
 ```
 
-### Extending Database Support
-
+### Database Extensions
 ```python
-# src/config.py
+# src/config.py - Add new database type
 def get_database_url(db_type: str, **kwargs) -> str:
-    if db_type.lower() == "my_database":
-        # Handle your custom database type
-        return f"my_database://{kwargs['connection_string']}"
+    if db_type.lower() == "snowflake":
+        return f"snowflake://{kwargs['user']}:{kwargs['password']}@{kwargs['account']}"
 ```
 
-## 📊 Example Notebook
+## 📊 Performance
 
-Check out `notebooks/demo.ipynb` for a complete 5-minute walkthrough that includes:
-
-1. Setting up the environment
-2. Creating a sample database
-3. Running natural language queries
-4. Generating visualizations
-5. Creating reports
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/your-repo/chat-sql-agent/blob/main/notebooks/demo.ipynb)
-
-## 🛡️ Security
-
-- Never commit API keys or sensitive credentials
-- Use environment variables for configuration
-- The application includes security scanning with Bandit
-- Database connections use parameterized queries to prevent SQL injection
-- Email functionality uses secure SMTP connections
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Troubleshooting
-
-### Common Issues
-
-**OpenAI API Key Error**
-```bash
-Error: OPENAI_API_KEY is required
-```
-Solution: Set your OpenAI API key in the `.env` file.
-
-**Database Connection Error**
-```bash
-Error: Could not connect to database
-```
-Solution: Check your database URL format and credentials.
-
-**Email Sending Error**
-```bash
-Error: Failed to send email
-```
-Solution: Verify SMTP settings and credentials in your `.env` file.
-
-### Getting Help
-
-- Check the [Issues](../../issues) page for known problems
-- Read through the test files for usage examples
-- Review the demo notebook for step-by-step guidance
+- **Query Optimization**: Intelligent SQL generation and validation
+- **Caching**: Database schema and query result caching
+- **Connection Pooling**: Efficient database connection management
+- **Async Processing**: Non-blocking report generation
 
 ## 🚀 Deployment
 
-### Docker
-
+### Docker Deployment
 ```dockerfile
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 COPY requirements.txt .
@@ -286,7 +229,7 @@ RUN pip install -r requirements.txt
 COPY . .
 EXPOSE 8501
 
-CMD ["streamlit", "run", "app/main.py"]
+CMD ["streamlit", "run", "app/main.py", "--server.address", "0.0.0.0"]
 ```
 
 ```bash
@@ -294,22 +237,54 @@ docker build -t chat-sql-agent .
 docker run -p 8501:8501 --env-file .env chat-sql-agent
 ```
 
-### Cloud Deployment
-
-The application is ready for deployment on:
-- **Streamlit Cloud**: Push to GitHub and connect your repository
-- **Heroku**: Includes Procfile and requirements.txt
-- **AWS/GCP/Azure**: Use the Docker container or serverless functions
+### Cloud Platforms
+- **Streamlit Cloud**: Direct GitHub integration
+- **AWS**: ECS, Lambda, or EC2 deployment
+- **Google Cloud**: Cloud Run or App Engine
+- **Azure**: Container Instances or App Service
 
 ## 📈 Roadmap
 
-- [ ] Support for more database types
-- [ ] Advanced visualization options
+### Short-term
 - [ ] Query caching and optimization
+- [ ] Advanced statistical functions
 - [ ] Multi-language support
-- [ ] REST API interface
-- [ ] Integration with BI tools
+- [ ] API endpoint creation
+
+### Medium-term
+- [ ] Integration with BI tools (Tableau, PowerBI)
+- [ ] Advanced ML analytics (forecasting, clustering)
+- [ ] Multi-tenant architecture
+- [ ] Real-time data streaming
+
+### Long-term
+- [ ] Natural language data modeling
+- [ ] Automated insight generation
+- [ ] Voice interface integration
+- [ ] Enterprise SSO integration
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes and add tests
+4. Commit your changes (`git commit -m 'Add amazing feature'`)
+5. Push to the branch (`git push origin feature/amazing-feature`)
+6. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- **Documentation**: Check this README and inline code comments
+- **Issues**: Report bugs via GitHub Issues
+- **Discussions**: Use GitHub Discussions for questions
+- **Email**: For enterprise support and consulting
 
 ---
 
-Made with ❤️ using LangChain and OpenAI
+**Transform your data analysis workflow today!** 🚀
+
+Made with ❤️ using OpenAI, LangChain, and modern Python technologies.
