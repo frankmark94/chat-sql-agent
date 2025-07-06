@@ -19,7 +19,7 @@ class DatabaseVisualizationInput(BaseModel):
 
 class DatabaseVisualizationTool(BaseTool):
     name: str = "create_database_visualization"
-    description: str = "Execute a SQL query and create a visualization from the results"
+    description: str = "Execute a SQL query and create a visualization from the results. Input format: 'query|chart_type|title|x_column|y_column' where only query and chart_type are required."
     args_schema: Type[BaseModel] = DatabaseVisualizationInput
     db_path: str = ""
     

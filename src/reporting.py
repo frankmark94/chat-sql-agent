@@ -314,7 +314,7 @@ def create_report_from_messages(
 
 
 def create_chart_from_query_result(
-    query_result: str, chart_type: str, title: str
+    query_result: str, chart_type: str, title: str, x_field: str = None, y_field: str = None
 ) -> str:
     """
     Create a chart from query result string.
@@ -323,25 +323,51 @@ def create_chart_from_query_result(
         query_result: Query result as string
         chart_type: Type of chart to create
         title: Chart title
+        x_field: X-axis field name
+        y_field: Y-axis field name
 
     Returns:
         Path to the created chart file
     """
     try:
         # Try to parse the query result as a DataFrame
-        lines = query_result.strip().split("\n")
-        if len(lines) < 2:
-            raise ValueError("Insufficient data for visualization")
+        import json
+        import ast
+        
+        # Try to parse as JSON first (list of dictionaries)
+        try:
+            if query_result.startswith('[') and query_result.endswith(']'):
+                data = json.loads(query_result)
+                df = pd.DataFrame(data)
+            else:
+                # Try to parse as Python list/tuple format
+                data = ast.literal_eval(query_result)
+                if isinstance(data, list) and len(data) > 0:
+                    if isinstance(data[0], dict):
+                        df = pd.DataFrame(data)
+                    else:
+                        # Assume it's a list of tuples from SQL result
+                        # We need to infer column names
+                        df = pd.DataFrame(data)
+                        if not hasattr(df, 'columns') or len(df.columns) == 0:
+                            df.columns = [f'col_{i}' for i in range(len(df.columns))]
+                else:
+                    raise ValueError("Empty data")
+        except:
+            # Fallback to line-by-line parsing
+            lines = query_result.strip().split("\n")
+            if len(lines) < 2:
+                raise ValueError("Insufficient data for visualization")
 
-        # Simple parsing - assumes tab or space separated values
-        data = []
-        headers = lines[0].split()
-        for line in lines[1:]:
-            row = line.split()
-            if len(row) == len(headers):
-                data.append(row)
+            # Simple parsing - assumes tab or space separated values
+            data = []
+            headers = lines[0].split()
+            for line in lines[1:]:
+                row = line.split()
+                if len(row) == len(headers):
+                    data.append(row)
 
-        df = pd.DataFrame(data, columns=headers)
+            df = pd.DataFrame(data, columns=headers)
 
         # Convert numeric columns
         for col in df.columns:
@@ -351,7 +377,7 @@ def create_chart_from_query_result(
                 pass
 
         filename = f"chart_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-        img_b64 = dataframe_to_plot(df, chart_type, title)
+        img_b64 = dataframe_to_plot(df, chart_type, title, x_field, y_field)
 
         with open(filename, "wb") as f:
             f.write(base64.b64decode(img_b64))

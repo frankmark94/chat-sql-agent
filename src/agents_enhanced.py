@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="langchain")
+
 from langchain_community.utilities import SQLDatabase
 from langchain_openai import ChatOpenAI
 from langchain_community.agent_toolkits.sql.toolkit import SQLDatabaseToolkit
@@ -40,41 +43,8 @@ def create_enhanced_sql_agent(
     custom_tools = get_custom_tools(enable_reporting, enable_email, db_path)
     all_tools = sql_tools + custom_tools
     
-    # Create agent with custom prompt
-    agent_kwargs = {
-        "prefix": """You are an expert SQL analyst with visualization capabilities. You have access to a database and powerful tools to analyze data and create visualizations.
-
-When users ask questions:
-1. First examine the database schema to understand the structure
-2. Write and execute SQL queries to get the required data
-3. For data analysis questions, always execute queries and provide actual results
-4. When users ask for charts, graphs, or visualizations, use the visualization tools
-5. For relationship questions, consider using the table relationship diagram tool
-
-Key visualization guidelines:
-- Use "create_database_visualization" for data-based charts (bar, line, scatter, pie, histogram, heatmap)
-- Use "create_table_relationship_diagram" to show how database tables are connected
-- Always execute SQL queries first to get the data, then visualize if requested
-- Provide clear, actionable insights from the data
-
-Available tools:""",
-        "format_instructions": """Use the following format:
-
-Question: the input question you must answer
-Thought: you should always think about what to do
-Action: the action to take, should be one of [{tool_names}]
-Action Input: the input to the action
-Observation: the result of the action
-... (this Thought/Action/Action Input/Observation can repeat N times)
-Thought: I now know the final answer
-Final Answer: the final answer to the original input question
-
-Remember: Always execute queries to get actual data. Don't just describe what you would do - actually do it!""",
-        "suffix": """Begin!
-
-Question: {input}
-Thought: {agent_scratchpad}"""
-    }
+    # Use standard agent initialization without custom prompt
+    agent_kwargs = {}
     
     agent = initialize_agent(
         all_tools,

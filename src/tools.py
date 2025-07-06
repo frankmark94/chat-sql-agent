@@ -95,11 +95,11 @@ def send_email(
 
 
 class QueryVisualizationInput(BaseModel):
-    visualization_request: str = Field(description="Visualization request in format: 'query_result|chart_type|title' (title is optional)")
+    visualization_request: str = Field(description="Visualization request in format: 'query_result|chart_type|title|x_field|y_field' (title, x_field, y_field are optional)")
 
 class QueryVisualizationTool(BaseTool):
     name: str = "create_visualization"
-    description: str = "Create a visualization from SQL query results"
+    description: str = "Create a visualization from SQL query results. Input format: 'query_result|chart_type|title|x_field|y_field' where only query_result and chart_type are required. Example: 'data|bar|Chart Title|month|sales'"
     args_schema: Type[BaseModel] = QueryVisualizationInput
 
     def _run(self, visualization_request: str) -> str:
@@ -112,10 +112,12 @@ class QueryVisualizationTool(BaseTool):
             query_result = parts[0].strip()
             chart_type = parts[1].strip()
             title = parts[2].strip() if len(parts) > 2 and parts[2].strip() else "Query Result Visualization"
+            x_field = parts[3].strip() if len(parts) > 3 and parts[3].strip() else None
+            y_field = parts[4].strip() if len(parts) > 4 and parts[4].strip() else None
             
             from reporting import create_chart_from_query_result
 
-            chart_path = create_chart_from_query_result(query_result, chart_type, title)
+            chart_path = create_chart_from_query_result(query_result, chart_type, title, x_field, y_field)
             return f"Visualization created: {chart_path}"
         except Exception as e:
             return f"Failed to create visualization: {str(e)}"
