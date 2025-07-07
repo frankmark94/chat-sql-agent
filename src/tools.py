@@ -140,8 +140,7 @@ def get_custom_tools(enable_reporting: bool = True, enable_email: bool = True, d
         tools.append(SendEmailTool())
 
     if enable_reporting:
-        tools.append(QueryVisualizationTool())
-        # Add visualization tools
+        # Only add the database visualization tools (not the duplicate QueryVisualizationTool)
         tools.extend(get_visualization_tools(db_path))
     
     return tools
