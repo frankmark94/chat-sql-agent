@@ -4,6 +4,7 @@ import sys
 import pandas as pd
 import streamlit as st
 from openai import OpenAI
+from sqlalchemy import create_engine
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../src")
 
@@ -68,6 +69,69 @@ def get_available_models():
         return ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o"]
 
 
+@st.dialog("Database Configuration")
+def database_config_dialog():
+    """Modal dialog for database connection."""
+    db_type = st.selectbox(
+        "Database Type",
+        ["SQLite", "PostgreSQL", "MySQL"],
+        key="db_type_dialog",
+    )
+
+    db_url = None
+
+    if db_type == "SQLite":
+        db_file = st.file_uploader(
+            "Upload SQLite Database",
+            type=["db", "sqlite", "sqlite3"],
+            key="sqlite_file",
+        )
+        if db_file:
+            with open("temp_db.sqlite", "wb") as f:
+                f.write(db_file.getbuffer())
+            db_url = "sqlite:///temp_db.sqlite"
+    else:
+        host = st.text_input("Host", key="host")
+        port_default = 5432 if db_type == "PostgreSQL" else 3306
+        port = st.number_input("Port", value=port_default, step=1, key="port")
+        database = st.text_input("DB Name", key="db_name")
+        username = st.text_input("Username", key="db_user")
+        password = st.text_input("Password", type="password", key="db_pass")
+
+        if all([host, port, database, username, password]):
+            if db_type == "PostgreSQL":
+                db_url = f"postgresql://{username}:{password}@{host}:{port}/{database}"
+            else:
+                db_url = f"mysql://{username}:{password}@{host}:{port}/{database}"
+
+    if st.button("Test Connection", key="test_conn"):
+        if not db_url:
+            st.error("Please provide all required fields")
+        else:
+            try:
+                engine = create_engine(db_url)
+                with engine.connect():
+                    pass
+                st.session_state.db_url = db_url
+                st.session_state.db_connected = True
+                if st.session_state.agent_type == "Enhanced SQL Agent":
+                    st.session_state.agent = create_enhanced_sql_agent(
+                        db_url,
+                        model_name=st.session_state.selected_model,
+                        enable_reporting=True,
+                        enable_email=True,
+                    )
+                else:
+                    st.session_state.agent = create_sql_agent(
+                        db_url, model_name=st.session_state.selected_model
+                    )
+                st.success("Connected successfully!")
+                st.rerun()
+            except Exception as e:
+                st.session_state.db_connected = False
+                st.error(f"Connection failed: {e}")
+
+
 st.set_page_config(page_title="Chat with SQL Agent", page_icon="🗣️", layout="wide")
 
 st.title("🗣️ Chat with SQL Agent")
@@ -84,6 +148,16 @@ if "selected_model" not in st.session_state:
 
 if "show_reasoning" not in st.session_state:
     st.session_state.show_reasoning = False
+
+if "db_connected" not in st.session_state:
+    st.session_state.db_connected = False
+
+if "db_url" not in st.session_state:
+    st.session_state.db_url = None
+
+if not st.session_state.db_connected:
+    database_config_dialog()
+    st.stop()
 
 # Show current configuration
 if st.session_state.agent:
@@ -163,27 +237,28 @@ with st.sidebar:
 
     if show_reasoning:
         st.info("💡 Reasoning steps will be shown below responses")
-    
+
     # Agent type selection
     st.subheader("🤖 Agent Type")
     agent_type = st.selectbox(
         "Select Agent Type",
         ["Enhanced SQL Agent", "Basic SQL Agent"],
         index=0,
-        help="Enhanced agent has better SQL execution and additional tools"
+        help="Enhanced agent has better SQL execution and additional tools",
     )
-    
+
     if "agent_type" not in st.session_state:
         st.session_state.agent_type = "Enhanced SQL Agent"
-    
+
     if agent_type != st.session_state.agent_type:
         st.session_state.agent_type = agent_type
         st.session_state.agent = None  # Reset agent when type changes
-    
+
     # Visualization help
     if agent_type == "Enhanced SQL Agent":
         with st.expander("📊 Visualization Examples"):
-            st.markdown("""
+            st.markdown(
+                """
             **The Enhanced Agent can create visualizations! Try these examples:**
             
             • "Create a bar chart of customer segments"
@@ -194,22 +269,49 @@ with st.sidebar:
             • "Visualize the correlation between product features"
             
             **Available chart types:** bar, line, scatter, pie, histogram, heatmap, network
-            """)
-            st.info("💡 Visualizations will appear automatically below your query results!")
-    
+            """
+            )
+            st.info(
+                "💡 Visualizations will appear automatically below your query results!"
+            )
+
     st.divider()
-    
+
     # Email Configuration
     st.subheader("📧 Email Configuration")
-    
+
     # Email settings input
-    email_from = st.text_input("From Email", value=settings.EMAIL_FROM if settings.EMAIL_FROM else "", help="Email address to send reports from")
-    smtp_server = st.text_input("SMTP Server", value=settings.SMTP_SERVER, help="SMTP server hostname (e.g., smtp.gmail.com)")
-    smtp_port = st.number_input("SMTP Port", value=settings.SMTP_PORT, min_value=1, max_value=65535, help="SMTP server port (usually 587 or 465)")
-    smtp_use_tls = st.checkbox("Use TLS", value=settings.SMTP_USE_TLS, help="Use TLS encryption for secure email transmission")
-    smtp_username = st.text_input("SMTP Username", value=settings.SMTP_USERNAME if settings.SMTP_USERNAME else "", help="Username for SMTP authentication")
-    smtp_password = st.text_input("SMTP Password", type="password", help="Password for SMTP authentication")
-    
+    email_from = st.text_input(
+        "From Email",
+        value=settings.EMAIL_FROM if settings.EMAIL_FROM else "",
+        help="Email address to send reports from",
+    )
+    smtp_server = st.text_input(
+        "SMTP Server",
+        value=settings.SMTP_SERVER,
+        help="SMTP server hostname (e.g., smtp.gmail.com)",
+    )
+    smtp_port = st.number_input(
+        "SMTP Port",
+        value=settings.SMTP_PORT,
+        min_value=1,
+        max_value=65535,
+        help="SMTP server port (usually 587 or 465)",
+    )
+    smtp_use_tls = st.checkbox(
+        "Use TLS",
+        value=settings.SMTP_USE_TLS,
+        help="Use TLS encryption for secure email transmission",
+    )
+    smtp_username = st.text_input(
+        "SMTP Username",
+        value=settings.SMTP_USERNAME if settings.SMTP_USERNAME else "",
+        help="Username for SMTP authentication",
+    )
+    smtp_password = st.text_input(
+        "SMTP Password", type="password", help="Password for SMTP authentication"
+    )
+
     # Update settings if values are provided
     if email_from:
         settings.EMAIL_FROM = email_from
@@ -220,7 +322,7 @@ with st.sidebar:
     settings.SMTP_SERVER = smtp_server
     settings.SMTP_PORT = smtp_port
     settings.SMTP_USE_TLS = smtp_use_tls
-    
+
     # Test email configuration
     if st.button("📧 Test Email Configuration"):
         if not email_from:
@@ -228,18 +330,25 @@ with st.sidebar:
         else:
             try:
                 import smtplib
+
                 server = smtplib.SMTP(smtp_server, smtp_port)
                 if smtp_use_tls:
                     server.starttls()
-                
+
                 # Only attempt login if username and password are provided
                 if smtp_username and smtp_password:
                     server.login(smtp_username, smtp_password)
-                    st.success("✅ Email configuration test successful with authentication!")
+                    st.success(
+                        "✅ Email configuration test successful with authentication!"
+                    )
                 else:
-                    st.success("✅ Email server connection successful (no authentication required)!")
-                    st.info("💡 Note: No username/password provided - using server without authentication")
-                
+                    st.success(
+                        "✅ Email server connection successful (no authentication required)!"
+                    )
+                    st.info(
+                        "💡 Note: No username/password provided - using server without authentication"
+                    )
+
                 server.quit()
             except smtplib.SMTPAuthenticationError as e:
                 st.error(f"❌ Authentication failed: {str(e)}")
@@ -248,12 +357,14 @@ with st.sidebar:
                 st.error(f"❌ SMTP error: {str(e)}")
             except Exception as e:
                 st.error(f"❌ Email configuration test failed: {str(e)}")
-    
+
     # Email report section
     if st.session_state.messages:
         st.subheader("📤 Send Report")
-        recipient_email = st.text_input("Recipient Email", help="Email address to send the report to")
-        
+        recipient_email = st.text_input(
+            "Recipient Email", help="Email address to send the report to"
+        )
+
         if st.button("📧 Send Report via Email"):
             if not recipient_email:
                 st.error("Please enter a recipient email address")
@@ -264,67 +375,15 @@ with st.sidebar:
                     try:
                         from tools import send_email
                         from reporting import create_report_from_messages
-                        
-                        report_path = create_report_from_messages(st.session_state.messages)
+
+                        report_path = create_report_from_messages(
+                            st.session_state.messages
+                        )
                         send_email(report_path, recipient_email)
                         st.success(f"✅ Report sent successfully to {recipient_email}!")
                     except Exception as e:
                         st.error(f"❌ Failed to send report: {str(e)}")
-    
-    st.divider()
 
-    # Database Configuration
-    st.subheader("🗄️ Database Configuration")
-
-    db_type = st.selectbox(
-        "Database Type", ["SQLite", "PostgreSQL", "MySQL", "SQL Server"]
-    )
-
-    if db_type == "SQLite":
-        db_file = st.file_uploader(
-            "Upload SQLite Database", type=["db", "sqlite", "sqlite3"]
-        )
-        if db_file:
-            with open("temp_db.sqlite", "wb") as f:
-                f.write(db_file.getbuffer())
-            db_url = "sqlite:///temp_db.sqlite"
-        else:
-            db_url = None
-    else:
-        host = st.text_input("Host", value="localhost")
-        port = st.number_input("Port", value=5432 if db_type == "PostgreSQL" else 3306)
-        database = st.text_input("Database Name")
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-
-        if all([host, port, database, username, password]):
-            if db_type == "PostgreSQL":
-                db_url = f"postgresql://{username}:{password}@{host}:{port}/{database}"
-            elif db_type == "MySQL":
-                db_url = f"mysql://{username}:{password}@{host}:{port}/{database}"
-            else:
-                db_url = f"mssql://{username}:{password}@{host}:{port}/{database}"
-        else:
-            db_url = None
-
-    if db_url and st.button("Connect to Database"):
-        try:
-            with st.spinner(f"Connecting with {st.session_state.selected_model}..."):
-                if st.session_state.agent_type == "Enhanced SQL Agent":
-                    st.session_state.agent = create_enhanced_sql_agent(
-                        db_url, 
-                        model_name=st.session_state.selected_model,
-                        enable_reporting=True,
-                        enable_email=True
-                    )
-                else:
-                    st.session_state.agent = create_sql_agent(db_url, model_name=st.session_state.selected_model)
-            st.success(f"✅ Connected successfully using {st.session_state.selected_model}!")
-            st.info(f"🎯 Ready to answer questions about your database")
-            st.info(f"🔧 Using {st.session_state.agent_type}")
-        except Exception as e:
-            st.error(f"❌ Connection failed: {str(e)}")
-            st.error("Please check your API key and database connection details")
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
@@ -350,23 +409,32 @@ if prompt := st.chat_input("Ask a question about your data..."):
                         intermediate_steps = response.get("intermediate_steps", [])
 
                         st.markdown(output)
-                        
+
                         # Check if any visualizations were created
-                        if "chart_" in output or "network_" in output or "table_relationships_" in output:
+                        if (
+                            "chart_" in output
+                            or "network_" in output
+                            or "table_relationships_" in output
+                        ):
                             # Extract image paths from response
                             import re
+
                             image_patterns = [
-                                r'reports/chart_\d{8}_\d{6}\.png',
-                                r'reports/network_\d{8}_\d{6}\.png',
-                                r'reports/table_relationships_\d{8}_\d{6}\.png'
+                                r"reports/chart_\d{8}_\d{6}\.png",
+                                r"reports/network_\d{8}_\d{6}\.png",
+                                r"reports/table_relationships_\d{8}_\d{6}\.png",
                             ]
-                            
+
                             for pattern in image_patterns:
                                 matches = re.findall(pattern, output)
                                 for match in matches:
                                     if os.path.exists(match):
-                                        st.image(match, caption="Generated Visualization", use_column_width=True)
-                        
+                                        st.image(
+                                            match,
+                                            caption="Generated Visualization",
+                                            use_column_width=True,
+                                        )
+
                         # Show reasoning steps if available
                         if intermediate_steps:
                             with st.expander("🧠 Reasoning Steps", expanded=False):
@@ -396,25 +464,36 @@ if prompt := st.chat_input("Ask a question about your data..."):
                             "output"
                         ]
                         st.markdown(response)
-                        
+
                         # Check if any visualizations were created
-                        if "chart_" in response or "network_" in response or "table_relationships_" in response:
+                        if (
+                            "chart_" in response
+                            or "network_" in response
+                            or "table_relationships_" in response
+                        ):
                             # Extract image paths from response
                             import re
+
                             image_patterns = [
-                                r'reports/chart_\d{8}_\d{6}\.png',
-                                r'reports/network_\d{8}_\d{6}\.png',
-                                r'reports/table_relationships_\d{8}_\d{6}\.png'
+                                r"reports/chart_\d{8}_\d{6}\.png",
+                                r"reports/network_\d{8}_\d{6}\.png",
+                                r"reports/table_relationships_\d{8}_\d{6}\.png",
                             ]
-                            
+
                             for pattern in image_patterns:
                                 matches = re.findall(pattern, response)
                                 for match in matches:
                                     if os.path.exists(match):
-                                        st.image(match, caption="Generated Visualization", use_column_width=True)
-                        
-                        st.session_state.messages.append({"role": "assistant", "content": response})
-                        
+                                        st.image(
+                                            match,
+                                            caption="Generated Visualization",
+                                            use_column_width=True,
+                                        )
+
+                        st.session_state.messages.append(
+                            {"role": "assistant", "content": response}
+                        )
+
                 except Exception as e:
                     error_msg = f"Error: {str(e)}"
                     st.error(error_msg)
