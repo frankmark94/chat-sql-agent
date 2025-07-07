@@ -1,0 +1,29 @@
+name: Chat SQL Agent
+description: A powerful AI-driven natural language interface for database interaction
+url: https://github.com/frankmark94/chat-sql-agent
+setup_url: https://github.com/frankmark94/chat-sql-agent/blob/main/docs/github-app-setup.md
+
+default_permissions:
+  actions: read
+  contents: read
+  issues: write
+  pull_requests: write
+  metadata: read
+  repository_hooks: write
+  statuses: write
+  checks: write
+
+default_events:
+  - push
+  - pull_request
+  - issues
+  - issue_comment
+  - pull_request_review
+  - pull_request_review_comment
+  - repository
+  - installation
+  - installation_repositories
+
+webhook_url: https://your-domain.com/github-webhook
+
+public: false

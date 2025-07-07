@@ -150,8 +150,29 @@ chat-sql-agent/
 │   ├── tools.py                   # Email and reporting tools
 │   ├── visualization_tools.py     # Chart and graph generation
 │   ├── reporting.py               # PDF and report generation
-│   └── config.py                  # Configuration management
+│   ├── config.py                  # Configuration management
+│   ├── github_client.py           # GitHub API client
+│   └── github_webhooks.py         # GitHub webhook handlers
+├── config/
+│   └── github-app.yml             # GitHub App configuration
+├── data/
+│   ├── sample_ecommerce.db        # Sample database
+│   └── temp_db.sqlite             # Temporary database
+├── docs/
+│   ├── GITHUB_APP_SETUP.md        # GitHub App setup guide
+│   └── LinkedInPost.md            # LinkedIn post content
+├── examples/
+│   └── notebooks/
+│       └── demo.ipynb             # Example notebook
 ├── reports/                       # Generated reports and charts
+├── scripts/
+│   ├── create_sample_db.py        # Database creation script
+│   ├── simple_agent.py            # Simple agent example
+│   └── check_*.py                 # Utility scripts
+├── tests/
+│   └── unit/
+│       ├── test_agent.py          # Agent tests
+│       └── test_*.py              # Other unit tests
 ├── uploads/                       # Database file uploads
 ├── requirements.txt               # Python dependencies
 └── .env.example                   # Environment template

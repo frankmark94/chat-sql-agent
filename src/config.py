@@ -60,6 +60,9 @@ class Settings(BaseSettings):
     REPORT_DIR: str = Field(
         default="reports", description="Directory for generated reports"
     )
+    DATA_DIR: str = Field(
+        default="data", description="Directory for database files"
+    )
     MAX_FILE_SIZE: int = Field(
         default=100 * 1024 * 1024, description="Maximum file size in bytes (100MB)"
     )
@@ -77,6 +80,20 @@ class Settings(BaseSettings):
         default=20, description="Database connection pool max overflow"
     )
     DB_POOL_TIMEOUT: int = Field(default=30, description="Database connection timeout")
+
+    # GitHub App Configuration
+    GITHUB_APP_ID: Optional[str] = Field(
+        default=None, description="GitHub App ID for GitHub integration"
+    )
+    GITHUB_APP_PRIVATE_KEY: Optional[str] = Field(
+        default=None, description="GitHub App private key (PEM format)"
+    )
+    GITHUB_APP_INSTALLATION_ID: Optional[str] = Field(
+        default=None, description="GitHub App installation ID"
+    )
+    GITHUB_WEBHOOK_SECRET: Optional[str] = Field(
+        default=None, description="GitHub webhook secret for signature validation"
+    )
 
     @field_validator("ALLOWED_HOSTS", mode="before")
     @classmethod
@@ -99,6 +116,7 @@ class Settings(BaseSettings):
         # Create directories if they don't exist
         os.makedirs(self.UPLOAD_DIR, exist_ok=True)
         os.makedirs(self.REPORT_DIR, exist_ok=True)
+        os.makedirs(self.DATA_DIR, exist_ok=True)
 
 
 # Global settings instance
@@ -166,7 +184,7 @@ def validate_config() -> bool:
             return False
 
         # Check directories exist and are writable
-        for directory in [settings.UPLOAD_DIR, settings.REPORT_DIR]:
+        for directory in [settings.UPLOAD_DIR, settings.REPORT_DIR, settings.DATA_DIR]:
             if not os.path.exists(directory):
                 try:
                     os.makedirs(directory, exist_ok=True)
