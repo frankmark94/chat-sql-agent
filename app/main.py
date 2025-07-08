@@ -10,64 +10,11 @@ from sqlalchemy import create_engine, text
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../src")
 
 from agents import create_sql_agent
-from agents_enhanced import create_enhanced_sql_agent
+from agents_enhanced import create_enhanced_sql_agent, run_agent_with_error_handling
 from config import settings
 
 
-@st.cache_data(ttl=3600)  # Cache for 1 hour
-def get_available_models():
-    """Fetch available OpenAI models."""
-    try:
-        if not settings.OPENAI_API_KEY:
-            return ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o"]
-
-        client = OpenAI(api_key=settings.OPENAI_API_KEY)
-        models = client.models.list()
-
-        # Filter for relevant chat models
-        chat_models = []
-        for model in models.data:
-            model_name = model.id
-            # Only include GPT models suitable for chat
-            if any(prefix in model_name.lower() for prefix in ["gpt-3.5", "gpt-4"]):
-                chat_models.append(model_name)
-
-        # Sort models with preferred ones first
-        preferred_order = ["gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]
-        sorted_models = []
-
-        # Add preferred models first (if available)
-        for preferred in preferred_order:
-            matching = [m for m in chat_models if preferred in m]
-            if matching:
-                sorted_models.extend(sorted(matching))
-
-        # Add remaining models
-        remaining = [
-            m
-            for m in chat_models
-            if not any(preferred in m for preferred in preferred_order)
-        ]
-        sorted_models.extend(sorted(remaining))
-
-        # Remove duplicates while preserving order
-        seen = set()
-        unique_models = []
-        for model in sorted_models:
-            if model not in seen:
-                seen.add(model)
-                unique_models.append(model)
-
-        return (
-            unique_models
-            if unique_models
-            else ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o"]
-        )
-
-    except Exception as e:
-        st.warning(f"Could not fetch models from OpenAI: {str(e)}")
-        # Return fallback models
-        return ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o"]
+# Model is now hardcoded to GPT-4o
 
 
 st.set_page_config(page_title="Chat with SQL Agent", page_icon="🗣️", layout="wide")
@@ -78,11 +25,19 @@ st.markdown("Ask questions about your database in natural language!")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# EMERGENCY: Clear messages if they contain too much data (base64 overflow)
+if st.session_state.messages:
+    total_chars = sum(len(msg["content"]) for msg in st.session_state.messages)
+    if total_chars > 50000:  # If messages are too large, clear them
+        st.session_state.messages = []
+        st.warning("🚨 Conversation history was automatically cleared due to context overflow!")
+        st.info("💡 You can now ask your question again.")
+
 if "agent" not in st.session_state:
     st.session_state.agent = None
 
 if "selected_model" not in st.session_state:
-    st.session_state.selected_model = "gpt-3.5-turbo"
+    st.session_state.selected_model = "gpt-4o"
 
 if "show_reasoning" not in st.session_state:
     st.session_state.show_reasoning = False
@@ -228,12 +183,18 @@ if st.session_state.agent:
     with col1:
         st.success("🟢 Connected to database")
     with col2:
-        st.info(f"🤖 Using {st.session_state.selected_model}")
+        st.info("🤖 Using GPT-4o")
     with col3:
-        if st.button("🔄 Reconnect"):
-            st.session_state.db_connected = False
-            st.session_state.agent = None
-            st.rerun()
+        col3a, col3b = st.columns(2)
+        with col3a:
+            if st.button("🔄 Reconnect"):
+                st.session_state.db_connected = False
+                st.session_state.agent = None
+                st.rerun()
+        with col3b:
+            if st.button("🗑️ Clear Chat"):
+                st.session_state.messages = []
+                st.rerun()
 
 with st.sidebar:
     st.header("🔧 Configuration")
@@ -265,7 +226,7 @@ with st.sidebar:
         st.markdown(f"**Database:** {get_status_badge(False)}")
     
     st.markdown(f"**Email:** {get_email_status()}")
-    st.markdown(f"**Model:** 🤖 {st.session_state.selected_model}")
+    st.markdown("**Model:** 🤖 GPT-4o")
     
     st.divider()
     
@@ -344,48 +305,10 @@ with st.sidebar:
         
         st.divider()
         
-        # Model Selection
+        # Model Selection - Fixed to GPT-4o
         st.markdown("**AI Model**")
-        available_models = get_available_models()
-        
-        model_descriptions = {
-            "gpt-4o": "Latest and most capable (Recommended)",
-            "gpt-4-turbo": "Fast and powerful",
-            "gpt-4": "High quality responses", 
-            "gpt-3.5-turbo": "Fast and cost-effective",
-        }
-        
-        model_options = []
-        for model in available_models:
-            if model in model_descriptions:
-                model_options.append(f"{model} - {model_descriptions[model]}")
-            else:
-                model_options.append(model)
-        
-        current_index = 0
-        for i, model in enumerate(available_models):
-            if model == st.session_state.selected_model:
-                current_index = i
-                break
-        
-        selected_model_display = st.selectbox(
-            "Select OpenAI Model",
-            model_options,
-            index=current_index,
-            help="Choose the AI model for SQL generation and analysis",
-            label_visibility="collapsed"
-        )
-        
-        selected_model = selected_model_display.split(" - ")[0]
-        st.session_state.selected_model = selected_model
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("🔄 Refresh", use_container_width=True):
-                st.cache_data.clear()
-                st.rerun()
-        with col2:
-            pass  # Keep for balance
+        st.info("🤖 Using GPT-4o (Latest and most capable model)")
+        st.session_state.selected_model = "gpt-4o"
         
         st.divider()
         
@@ -546,6 +469,14 @@ if prompt := st.chat_input("Ask a question about your data..."):
     if not st.session_state.db_connected or not st.session_state.agent:
         st.error("Please connect to a database first!")
     else:
+        # Check for context overflow and manage conversation history
+        total_tokens = sum(len(msg["content"]) for msg in st.session_state.messages) + len(prompt)
+        
+        # If context is getting too large, keep only the last few messages
+        if total_tokens > 12000:  # Conservative limit to prevent overflow
+            st.session_state.messages = st.session_state.messages[-4:]  # Keep last 4 messages
+            st.info("🔄 Conversation history trimmed to prevent context overflow")
+        
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
@@ -553,23 +484,59 @@ if prompt := st.chat_input("Ask a question about your data..."):
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 try:
-                    # Get response with or without intermediate steps
+                    # Get response with or without intermediate steps using error handling
                     if st.session_state.show_reasoning:
-                        response = st.session_state.agent.invoke(
-                            {"input": prompt}, return_only_outputs=False
+                        response = run_agent_with_error_handling(
+                            st.session_state.agent, prompt
                         )
                         output = response["output"]
                         intermediate_steps = response.get("intermediate_steps", [])
 
+                        # Display the output
                         st.markdown(output)
                         
-                        # Check if any visualizations were created
-                        if "chart_" in output or "network_" in output or "table_relationships_" in output:
-                            # Extract image paths from response
-                            import re
+                        # Check intermediate steps for visualization tool calls and parse JSON responses
+                        import re
+                        import json
+                        images_displayed = False
+                        
+                        if intermediate_steps:
+                            for i, (action, observation) in enumerate(intermediate_steps):
+                                # Check if this step used a visualization tool
+                                if hasattr(action, 'tool') and 'visualization' in action.tool.lower():
+                                    try:
+                                        # Try to parse JSON response from visualization tool
+                                        chart_data = json.loads(str(observation))
+                                        if chart_data.get("status") == "success" and "chart_path" in chart_data:
+                                            chart_path = chart_data["chart_path"]
+                                            chart_type = chart_data.get("chart_type", "visualization")
+                                            message = chart_data.get("message", "Visualization created")
+                                            
+                                            if os.path.exists(chart_path):
+                                                st.image(chart_path, caption=f"Generated {chart_type.title()} Chart", use_container_width=True)
+                                                st.success(f"✅ {message}")
+                                                images_displayed = True
+                                    except (json.JSONDecodeError, KeyError):
+                                        # Fallback to regex parsing if JSON fails
+                                        image_patterns = [
+                                            r'reports/chart_\d{8}_\d{6}\.png',
+                                            r'reports/network_\d{8}_\d{6}\.png', 
+                                            r'reports/table_relationships_\d{8}_\d{6}\.png'
+                                        ]
+                                        
+                                        for pattern in image_patterns:
+                                            matches = re.findall(pattern, str(observation))
+                                            for match in matches:
+                                                if os.path.exists(match):
+                                                    st.image(match, caption="Generated Visualization", use_container_width=True)
+                                                    images_displayed = True
+                        
+                        # Fallback: check final output and recent files if no images found in steps
+                        if not images_displayed:
+                            # Check final output for file paths
                             image_patterns = [
                                 r'reports/chart_\d{8}_\d{6}\.png',
-                                r'reports/network_\d{8}_\d{6}\.png',
+                                r'reports/network_\d{8}_\d{6}\.png', 
                                 r'reports/table_relationships_\d{8}_\d{6}\.png'
                             ]
                             
@@ -577,7 +544,21 @@ if prompt := st.chat_input("Ask a question about your data..."):
                                 matches = re.findall(pattern, output)
                                 for match in matches:
                                     if os.path.exists(match):
-                                        st.image(match, caption="Generated Visualization", use_column_width=True)
+                                        st.image(match, caption="Generated Visualization", use_container_width=True)
+                                        images_displayed = True
+                            
+                            # Final fallback: automatically detect most recent chart if visualization keywords present
+                            if not images_displayed and ("chart" in output.lower() or "visualization" in output.lower() or "created" in output.lower()):
+                                import glob
+                                chart_files = glob.glob("reports/chart_*.png")
+                                network_files = glob.glob("reports/network_*.png") 
+                                table_files = glob.glob("reports/table_relationships_*.png")
+                                all_files = chart_files + network_files + table_files
+                                
+                                if all_files:
+                                    latest_file = max(all_files, key=os.path.getctime)
+                                    st.image(latest_file, caption="Generated Visualization", use_container_width=True)
+                                    st.success(f"✅ Auto-detected and displayed: {os.path.basename(latest_file)}")
                         
                         # Show reasoning steps if available
                         if intermediate_steps:
@@ -604,26 +585,45 @@ if prompt := st.chat_input("Ask a question about your data..."):
                             {"role": "assistant", "content": output}
                         )
                     else:
-                        response = st.session_state.agent.invoke({"input": prompt})[
-                            "output"
-                        ]
+                        response_data = run_agent_with_error_handling(
+                            st.session_state.agent, prompt
+                        )
+                        response = response_data["output"]
+                        
+                        # Display the response
                         st.markdown(response)
                         
-                        # Check if any visualizations were created
-                        if "chart_" in response or "network_" in response or "table_relationships_" in response:
-                            # Extract image paths from response
-                            import re
-                            image_patterns = [
-                                r'reports/chart_\d{8}_\d{6}\.png',
-                                r'reports/network_\d{8}_\d{6}\.png',
-                                r'reports/table_relationships_\d{8}_\d{6}\.png'
-                            ]
+                        # Check for visualizations in the response
+                        import re
+                        import json
+                        images_displayed = False
+                        
+                        # Check final output for file paths
+                        image_patterns = [
+                            r'reports/chart_\d{8}_\d{6}\.png',
+                            r'reports/network_\d{8}_\d{6}\.png',
+                            r'reports/table_relationships_\d{8}_\d{6}\.png'
+                        ]
+                        
+                        for pattern in image_patterns:
+                            matches = re.findall(pattern, response)
+                            for match in matches:
+                                if os.path.exists(match):
+                                    st.image(match, caption="Generated Visualization", use_container_width=True)
+                                    images_displayed = True
+                        
+                        # Fallback: automatically detect most recent chart if visualization keywords present
+                        if not images_displayed and ("chart" in response.lower() or "visualization" in response.lower() or "created" in response.lower()):
+                            import glob
+                            chart_files = glob.glob("reports/chart_*.png")
+                            network_files = glob.glob("reports/network_*.png") 
+                            table_files = glob.glob("reports/table_relationships_*.png")
+                            all_files = chart_files + network_files + table_files
                             
-                            for pattern in image_patterns:
-                                matches = re.findall(pattern, response)
-                                for match in matches:
-                                    if os.path.exists(match):
-                                        st.image(match, caption="Generated Visualization", use_column_width=True)
+                            if all_files:
+                                latest_file = max(all_files, key=os.path.getctime)
+                                st.image(latest_file, caption="Generated Visualization", use_container_width=True)
+                                st.success(f"✅ Auto-detected and displayed: {os.path.basename(latest_file)}")
                         
                         st.session_state.messages.append({"role": "assistant", "content": response})
                         

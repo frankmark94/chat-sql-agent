@@ -35,6 +35,14 @@ class DatabaseVisualizationTool(BaseTool):
                 return "Error: Must provide at least query|chart_type"
             
             query = parts[0].strip()
+            # Remove leading and trailing quotes if present
+            if query.startswith(("'", '"')) and query.endswith(("'", '"')):
+                query = query[1:-1]
+            elif query.startswith(("'", '"')):
+                query = query[1:]
+            elif query.endswith(("'", '"')):
+                query = query[:-1]
+            
             chart_type = parts[1].strip()
             title = parts[2].strip() if len(parts) > 2 and parts[2].strip() else "Database Visualization"
             x_column = parts[3].strip() if len(parts) > 3 and parts[3].strip() else None
@@ -140,7 +148,8 @@ class DatabaseVisualizationTool(BaseTool):
             plt.savefig(filepath, dpi=300, bbox_inches='tight')
             plt.close()
             
-            return filepath
+            # Return simple text response to avoid template variable conflicts
+            return f"Visualization created successfully and saved to {filepath}"
             
         except Exception as e:
             plt.close()
@@ -183,7 +192,8 @@ class DatabaseVisualizationTool(BaseTool):
             plt.savefig(filepath, dpi=300, bbox_inches='tight')
             plt.close()
             
-            return filepath
+            # Return simple text response to avoid template variable conflicts
+            return f"Network diagram created successfully and saved to {filepath}"
             
         except Exception as e:
             plt.close()
@@ -256,7 +266,8 @@ class TableRelationshipTool(BaseTool):
             plt.savefig(filepath, dpi=300, bbox_inches='tight')
             plt.close()
             
-            return f"Table relationship diagram created: {filepath}"
+            # Return simple text response to avoid template variable conflicts
+            return f"Table relationship diagram created successfully and saved to {filepath}"
             
         except Exception as e:
             return f"Error creating table relationship diagram: {str(e)}"
